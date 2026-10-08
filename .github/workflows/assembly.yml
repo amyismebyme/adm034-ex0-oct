@@ -9,6 +9,11 @@ jobs:
   start:
     runs-on: ubuntu-latest
     steps:
+      - name: Write summary header
+        run: |
+          echo "## Vehicle Assembly Pipeline" >> $GITHUB_STEP_SUMMARY
+          echo "Assembly started at $(date -u)" >> $GITHUB_STEP_SUMMARY
+
       - name: Print start message
         run: echo "Starting assembly of the vehicles"
 
@@ -192,6 +197,10 @@ jobs:
           path: build/car.txt
           retention-days: 3
 
+      - name: Deployment complete
+        if: always()
+        run: echo "Deployment attempt complete for car"
+
   deploy_motorbike:
     needs: test_motorbike
     runs-on: ubuntu-latest
@@ -215,6 +224,10 @@ jobs:
           path: build/motorbike.txt
           retention-days: 3
 
+      - name: Deployment complete
+        if: always()
+        run: echo "Deployment attempt complete for motorbike"
+
   deploy_truck:
     needs: test_truck
     runs-on: ubuntu-latest
@@ -237,6 +250,10 @@ jobs:
           name: truck-files-failure
           path: build/truck.txt
           retention-days: 3
+
+      - name: Deployment complete
+        if: always()
+        run: echo "Deployment attempt complete for truck"
 
   quality_report:
     needs: [test_car, test_motorbike, test_truck]
