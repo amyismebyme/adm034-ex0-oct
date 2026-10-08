@@ -6,6 +6,12 @@ on:
   workflow_dispatch:
 
 jobs:
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print start message
+        run: echo "Starting assembly of the vehicles"
+
   build_car:
     needs: start
     runs-on: ubuntu-latest
@@ -19,9 +25,11 @@ jobs:
           echo "Body Frame and Doors" >> build/car.txt
           echo "Lights and Indicators" >> build/car.txt
           echo "Winter wheels for car" > build/spare_parts_car.txt
-          echo "Invoice for car" > build/invoice_car.txt
           echo "Car Assembly Completed!"
           cat build/car.txt
+
+      - name: Create invoice
+        run: echo "Invoice for car" > build/invoice_car.txt
 
       - name: Upload car artifact
         uses: actions/upload-artifact@v6
@@ -46,9 +54,11 @@ jobs:
           echo "Seat" >> build/motorbike.txt
           echo "Fuel Tank" >> build/motorbike.txt
           echo "Winter wheels for motorbike" > build/spare_parts_motorbike.txt
-          echo "Invoice for motorbike" > build/invoice_motorbike.txt
           echo "Motorbike Assembly Completed!"
           cat build/motorbike.txt
+
+      - name: Create invoice
+        run: echo "Invoice for motorbike" > build/invoice_motorbike.txt
 
       - name: Upload motorbike artifact
         uses: actions/upload-artifact@v6
@@ -57,6 +67,34 @@ jobs:
           path: |
             build/motorbike.txt
             build/spare_parts_motorbike.txt
+          retention-days: 1
+
+  build_truck:
+    needs: start
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assemble truck
+        run: |
+          mkdir -p build
+          echo "Chassis" > build/truck.txt
+          echo "Engine" >> build/truck.txt
+          echo "Wheels" >> build/truck.txt
+          echo "Cargo Bed" >> build/truck.txt
+          echo "Cabin" >> build/truck.txt
+          echo "Winter wheels for truck" > build/spare_parts_truck.txt
+          echo "Truck Assembly Completed!"
+          cat build/truck.txt
+
+      - name: Create invoice
+        run: echo "Invoice for truck" > build/invoice_truck.txt
+
+      - name: Upload truck artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: truck-files
+          path: |
+            build/truck.txt
+            build/spare_parts_truck.txt
           retention-days: 1
 
   test_car:
@@ -93,32 +131,6 @@ jobs:
           grep "motorbike" build/spare_parts_motorbike.txt
           echo "Motorbike tests passed!"
 
-  build_truck:
-    needs: start
-    runs-on: ubuntu-latest
-    steps:
-      - name: Assemble truck
-        run: |
-          mkdir -p build
-          echo "Chassis" > build/truck.txt
-          echo "Engine" >> build/truck.txt
-          echo "Wheels" >> build/truck.txt
-          echo "Cargo Bed" >> build/truck.txt
-          echo "Cabin" >> build/truck.txt
-          echo "Winter wheels for truck" > build/spare_parts_truck.txt
-          echo "Invoice for truck" > build/invoice_truck.txt
-          echo "Truck Assembly Completed!"
-          cat build/truck.txt
-
-      - name: Upload truck artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: truck-files
-          path: |
-            build/truck.txt
-            build/spare_parts_truck.txt
-          retention-days: 1
-
   test_truck:
     needs: build_truck
     runs-on: ubuntu-latest
@@ -143,10 +155,10 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:
-          path: build/
           merge-multiple: true
+          path: build/
 
-      - name: Verify all vehicles
+      - name: Test all vehicles present, invoices excluded
         run: |
           test -f build/car.txt
           test -f build/motorbike.txt
@@ -154,13 +166,7 @@ jobs:
           test ! -f build/invoice_car.txt
           test ! -f build/invoice_motorbike.txt
           test ! -f build/invoice_truck.txt
-          echo "All vehicles present, no invoices leaked!"
-
-  start:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Print start message
-        run: echo "Starting assembly of the vehicles"
+          echo "All vehicles assembled and invoices correctly excluded!"
 
   deploy_car:
     needs: test_car
