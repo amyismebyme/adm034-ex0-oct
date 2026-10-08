@@ -7,6 +7,7 @@ on:
 
 jobs:
   build_car:
+    needs: start
     runs-on: ubuntu-latest
     steps:
       - name: Assemble car
@@ -32,6 +33,7 @@ jobs:
           retention-days: 1
 
   build_motorbike:
+    needs: start
     runs-on: ubuntu-latest
     steps:
       - name: Assemble motorbike
@@ -92,6 +94,7 @@ jobs:
           echo "Motorbike tests passed!"
 
   build_truck:
+    needs: start
     runs-on: ubuntu-latest
     steps:
       - name: Assemble truck
@@ -152,3 +155,79 @@ jobs:
           test ! -f build/invoice_motorbike.txt
           test ! -f build/invoice_truck.txt
           echo "All vehicles present, no invoices leaked!"
+
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print start message
+        run: echo "Starting assembly of the vehicles"
+
+  deploy_car:
+    needs: test_car
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download car artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: car-files
+          path: build/
+
+      - name: Deploy car
+        run: |
+          exit 1
+          echo "Deploying car to production"
+          cat build/car.txt
+
+      - name: Upload failure artifact
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: car-files-failure
+          path: build/car.txt
+          retention-days: 3
+
+  deploy_motorbike:
+    needs: test_motorbike
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download motorbike artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: motorbike-files
+          path: build/
+
+      - name: Deploy motorbike
+        run: |
+          echo "Deploying motorbike to production"
+          cat build/motorbike.txt
+
+      - name: Upload failure artifact
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: motorbike-files-failure
+          path: build/motorbike.txt
+          retention-days: 3
+
+  deploy_truck:
+    needs: test_truck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download truck artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: truck-files
+          path: build/
+
+      - name: Deploy truck
+        run: |
+          echo "Deploying truck to production"
+          cat build/truck.txt
+
+      - name: Upload failure artifact
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: truck-files-failure
+          path: build/truck.txt
+          retention-days: 3
