@@ -44,6 +44,9 @@ jobs:
         run: |
           echo "Manual run: deploying $VEHICLE to $ENVIRONMENT"
 
+      - name: Dump github context
+        run: echo '${{ toJSON(github) }}'
+
   build_car:
     needs: start
     runs-on: ubuntu-latest
@@ -165,12 +168,13 @@ jobs:
           echo "Motorbike tests passed!"
 
   test_truck:
+    needs: build_truck
     runs-on: ubuntu-latest
     steps:
       - name: Download truck artifact
         uses: actions/download-artifact@v7
         with:
-          name: truck-output
+          name: truck-files
           path: build/
 
       - name: Test truck
@@ -204,7 +208,6 @@ jobs:
     needs: [test_car, test_motorbike, test_truck]
     runs-on: ubuntu-latest
     continue-on-error: true
-    if: needs.test_car.result == 'passed'
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v7
